@@ -15,8 +15,8 @@ Please cite code from this page as:
 ## Contents
 
   - [:file\_folder: data_process](/data_process): Species data processing
-  - [:file\_folder: data_visualization](/data_visualization): Environmental data processing
-  - [:file\_folder: data_analysis](/data_analysis): Environmental data extracted for state space modeled and pseudo-absence location
+  - [:file\_folder: data_visualization](/data_visualization): Code for manuscript figures
+  - [:file\_folder: data_analysis](/data_analysis): Code for analysis referenced in manuscript
 
 ## Data
 
