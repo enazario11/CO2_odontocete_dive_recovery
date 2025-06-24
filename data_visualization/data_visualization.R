@@ -667,8 +667,7 @@ bel_vent2 <- bel_vent %>%
          sp = "Beluga")
 
 swim_vent <- rbind(dolph_vent2, bel_vent2)
-swim_vent$Animal <- factor(swim_vent$Animal, levels = c("Maple", "Qinu", "Shila", "Donley", "Rain"))
-swim_vent <- swim_vent %>% filter(Animal != "Shila")
+swim_vent$Animal <- factor(swim_vent$Animal, levels = c("Maple", "Qinu", "Donley", "Rain"))
 
 swim_vent <- swim_vent %>% group_by(id, Recover_per) %>% mutate(freq = (max(Breath_Number)/max(Elapsed, na.rm= TRUE))*60) %>% ungroup()
 swim_vent_tt <- swim_vent %>% filter(sp == "Dolphin")
