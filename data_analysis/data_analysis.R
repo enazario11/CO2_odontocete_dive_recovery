@@ -361,28 +361,7 @@ vent_dl$mean_ibi[vent_dl$mean_ibi == "NaN"] <- NA
 vent_tt <- dat_freq_rec %>% filter(sp == "Dolphin" & elapsed_time < 10) %>% droplevels() %>% drop_na()
 
 #beluga models
-length_k <- 1 + (length(unique(vent_dl$Animal))-1) + (length(unique(vent_dl$Trial))-1)
-
-#breath frequency
-vent_rate_dl <- gnls(
-  model = breath_freq_min ~ Asym + (R0 - Asym) * exp(-k * elapsed_time), 
-  data = vent_dl, 
-  
-  params = list(
-    Asym ~ 1, 
-    R0 ~ 1,
-    k ~ Animal + Trial
-  ),
-  
-  start = list(
-    Asym = bel_rest_hline_f, 
-    R0 = 6, 
-    k = rep(0.1, length_k)), 
-  
-  correlation = corAR1(form = ~ elapsed_time | Date/Animal)
-)
-
-#breath duration 
+#breath duration
 vent_dur_dl <- gnls(
   model = mean_breath_dur ~ Asym + (R0 - Asym) * exp(-k * elapsed_time), 
   data = vent_dl, 
@@ -390,18 +369,24 @@ vent_dur_dl <- gnls(
   params = list(
     Asym ~ 1, 
     R0 ~ 1,
-    k ~ Animal + Trial
+    k ~ Trial
   ),
   
   start = list(
     Asym = bel_rest_hline_d, 
     R0 = 1.5, 
-    k = rep(0.1, length_k)), 
+    k = rep(0.1, length(unique(vent_dl$Trial)))), 
   
-  correlation = corAR1(form = ~ elapsed_time | Date/Animal)
-)
+  control = gnlsControl(
+    maxIter = 1000,
+    tolerance = 1e-5,
+    nlsTol = 1e-5,
+    minScale = 1e-10
+  ),
+  
+  correlation = corAR1(form = ~ elapsed_time | Date/Animal))
 
-#IBI 
+#IBI
 vent_ibi_dl <- gnls(
   model = mean_ibi ~ Asym + (R0 - Asym) * exp(-k * elapsed_time), 
   data = vent_dl, 
@@ -409,39 +394,24 @@ vent_ibi_dl <- gnls(
   params = list(
     Asym ~ 1, 
     R0 ~ 1,
-    k ~ Animal + Trial
+    k ~ Trial
   ),
   
   start = list(
     Asym = bel_rest_hline_i, 
     R0 = 8, 
-    k = rep(0.1, length_k)), 
+    k = rep(0.1, (length(unique(vent_dl$Trial))))), 
   
-  correlation = corAR1(form = ~ elapsed_time | Date/Animal)
-)
-
-# dolphin models
-length_k <- 1+ (length(unique(vent_tt$Animal))-1) + (length(unique(vent_tt$Trial))-1)
-
-#breath frequency
-vent_rate_tt <- gnls(
-  model = breath_freq_min ~ Asym + (R0 - Asym) * exp(-k * elapsed_time), 
-  data = vent_tt, 
-  
-  params = list(
-    Asym ~ 1, 
-    R0 ~ 1,
-    k ~ Animal + Trial
+  control = gnlsControl(
+    maxIter = 1000,
+    tolerance = 1e-5,
+    nlsTol = 1e-5,
+    minScale = 1e-10
   ),
   
-  start = list(
-    Asym = dol_rest_hline_f, 
-    R0 = 6, 
-    k = rep(0.1, length_k)), 
-  
-  correlation = corAR1(form = ~ elapsed_time | Date/Animal)
-)
+  correlation = corAR1(form = ~ elapsed_time | Date/Animal))
 
+#dolphin models
 #breath duration 
 vent_dur_tt <- gnls(
   model = mean_breath_dur ~ Asym + (R0 - Asym) * exp(-k * elapsed_time), 
@@ -450,16 +420,15 @@ vent_dur_tt <- gnls(
   params = list(
     Asym ~ 1, 
     R0 ~ 1,
-    k ~ Animal + Trial
+    k ~ Trial
   ),
   
   start = list(
     Asym = dol_rest_hline_d, 
     R0 = 1, 
-    k = rep(0.1, length_k)), 
+    k = rep(0.1, length(unique(vent_tt$Trial)))), 
   
-  correlation = corAR1(form = ~ elapsed_time | Date/Animal)
-)
+  correlation = corAR1(form = ~ elapsed_time | Date/Animal))
 
 #IBI
 vent_ibi_tt <- gnls(
@@ -469,19 +438,20 @@ vent_ibi_tt <- gnls(
   params = list(
     Asym ~ 1, 
     R0 ~ 1,
-    k ~ Animal + Trial
+    k ~ Trial
   ),
   
   start = list(
     Asym = dol_rest_hline_i, 
     R0 = 12, 
-    k = rep(0.001, length_k)),
+    k = rep(0.01, length(unique(vent_tt$Trial)))),
   
   control = gnlsControl(
-    maxIter = 100, 
-    tolerance = 1e-5, 
-    nlsTol = 1e-5, 
-    minScale = 1e-10),
+    maxIter = 1000,
+    tolerance = 1e-5,
+    nlsTol = 1e-5,
+    minScale = 1e-10
+  ),
   
   correlation = corAR1(form = ~ elapsed_time | Date/Animal)
   

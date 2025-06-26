@@ -331,154 +331,164 @@ all_ph
 ## Ventilation figure (Nazario et al., 2025 Figure 4) ####
 dat_freq_rec$Trial <- factor(dat_freq_rec$Trial, levels = c("Rest","x1 Swim", "x3 Swim", "x5 Swim", "SAB"))
 
-#beluga plots
-#rest
-bel_rest <- vent_binned %>%
-  filter(Trial == "Rest" & sp == "Beluga") 
+#predict
+bel_dur_grid <- expand_grid(elapsed_time = seq(0, 10, length.out = 1e3),
+                            Trial = unique(vent_dl$Trial)) %>%
+  mutate(mean_dur = predict(vent_dur_dl, newdata = .)) %>% 
+  group_by(elapsed_time) %>% 
+  summarize(mean_breath_dur = mean(mean_dur),
+            .groups = "drop")
 
-#rest freq 
-bel_rest_hline_f = mean(bel_rest$breath_freq_min, na.rm = TRUE)
-bel_rest_sd_f = sd(bel_rest$breath_freq_min, na.rm = TRUE)
-
-#freq
-bel_freq <- dat_freq_rec %>% filter(sp == "Beluga" & 
-                                      elapsed_time < 10) %>%
-  ggplot(aes(x = elapsed_time, y = breath_freq_min, color = Trial))+ 
-  geom_rect(aes(xmin = -Inf, xmax = Inf, ymin = bel_rest_hline_f - bel_rest_sd_f, ymax = bel_rest_hline_f + bel_rest_sd_f), fill = "grey90", color = "grey90") +
-  geom_hline(yintercept = bel_rest_hline_f, color = "grey60", linetype = "dashed", size = 1) +
-  geom_point(alpha = 0.2, size = 1.5)+
-  geom_smooth(se = FALSE, linewidth = 2)+
-  #facet_wrap(~Trial_Type)+
-  #xlim(1, 11)+
-  ylim(1,14)+
-  xlab("Surface recovery time (min)")+
-  ylab("Breath frequency per 60 sec")+
-  labs(title = "Beluga ventilation")+
-  ms_theme()+
-  scale_color_manual(values = c(col_pal[3], col_pal[5]))+
-  theme(axis.text.x = element_blank(), 
-        axis.title.x = element_blank(), 
-        legend.position = "none", 
-        legend.justification = "left")
-
-#dur
-bel_rest_hline_d = mean(bel_rest$mean_breath_dur, na.rm = TRUE)
-bel_rest_sd_d = sd(bel_rest$mean_breath_dur, na.rm = TRUE)
-
-bel_dur <- dat_freq_rec %>% filter(sp == "Beluga" & 
-                                     elapsed_time < 10) %>%
+#plot
+bel_dur <- vent_dl %>% filter(sp == "Beluga" & 
+                                elapsed_time < 10) %>%
   ggplot(aes(x = elapsed_time, y = mean_breath_dur, color = Trial))+ 
-  geom_rect(aes(xmin = -Inf, xmax = Inf, ymin = bel_rest_hline_d - bel_rest_sd_d, ymax = bel_rest_hline_d + bel_rest_sd_d), fill = "grey90", color = "grey90") +
+  annotate("rect",
+           xmin = -Inf, 
+           xmax = Inf, 
+           ymin = bel_rest_hline_d - bel_rest_sd_d, 
+           ymax = bel_rest_hline_d + bel_rest_sd_d, 
+           fill = "grey90", 
+           color = NA, 
+           alpha = 0.8) +
   geom_hline(yintercept = bel_rest_hline_d, color = "grey60", linetype = "dashed", size = 1) +
-  geom_point(alpha = 0.2, size = 1.5)+
-  geom_smooth(se = FALSE, linewidth = 2)+
-  #facet_wrap(~Trial_Type)+
-  #xlim(1, 11)+
+  geom_point(alpha = 0.5, size = 1.5)+
+  geom_line(data = bel_dur_grid,
+            linewidth = 1.5, 
+            color = "black") +
   ylim(0,4)+
   xlab("Surface recovery time (min)")+
   ylab("Breath duration (s)")+
+  labs(title = "Beluga")+
   ms_theme()+
   scale_color_manual(values = c(col_pal[3], col_pal[5]))+
-  theme(axis.text.x = element_blank(), 
-        axis.title.x = element_blank(), 
-        legend.position = "none")
-
-#IBI
-bel_rest_hline_i = mean(bel_rest$mean_ibi, na.rm = TRUE)
-bel_rest_sd_i = sd(bel_rest$mean_ibi, na.rm = TRUE)
-
-bel_ibi <- dat_freq_rec %>% filter(sp == "Beluga" & 
-                                     elapsed_time < 10) %>%
-  ggplot(aes(x = elapsed_time, y = mean_ibi, color = Trial))+ 
-  geom_rect(aes(xmin = -Inf, xmax = Inf, ymin = bel_rest_hline_i - bel_rest_sd_i, ymax = bel_rest_hline_i + bel_rest_sd_i), fill = "grey90", color = "grey90") +
-  geom_hline(yintercept = bel_rest_hline_i, color = "grey60", linetype = "dashed", size = 1) +
-  geom_point( alpha = 0.2, size = 1.5)+
-  geom_smooth(se = FALSE,  linewidth = 2)+
-  # facet_wrap(~Trial_Type)+
-  #xlim(1, 11)+
-  ylim(0,100)+
-  xlab("Surface recovery time (min)")+
-  ylab("Inter-breath Interval (s)")+
-  ms_theme()+
-  scale_color_manual(values = c(col_pal[3], col_pal[5]))+
-  theme(legend.position = "none")
-
-#dolphin plots
-#rest
-dol_rest <- vent_binned %>%
-  filter(Trial == "Rest" & sp == "Dolphin") 
-
-#freq
-dol_rest_hline_f = mean(dol_rest$breath_freq_min, na.rm = TRUE)
-dol_rest_sd_f = sd(dol_rest$breath_freq_min, na.rm = TRUE)
-
-dol_freq <- dat_freq_rec %>% filter(sp == "Dolphin" & 
-                                      elapsed_time < 10) %>%
-  ggplot(aes(x = elapsed_time, y = breath_freq_min, color = Trial))+ 
-  geom_rect(aes(xmin = -Inf, xmax = Inf, ymin = dol_rest_hline_f - dol_rest_sd_f, ymax = dol_rest_hline_f + dol_rest_sd_f), fill = "grey90", color = "grey90") +
-  geom_hline(yintercept = dol_rest_hline_f, color = "grey60", linetype = "dashed", size = 1) +
-  geom_point(alpha = 0.2, size = 1.5)+
-  geom_smooth(se = FALSE, linewidth = 2)+
-  #facet_wrap(~Trial_Type, ncol = 4)+
-  #xlim(1, 11)+
-  ylim(1,14)+
-  xlab("Surface recovery time (min)")+
-  ylab("Breath frequency per 60 sec")+
-  labs(title = "Dolphin ventilation", color = "Trial type")+
-  ms_theme()+
-  scale_color_manual(values = col_pal[2:5])+
-  theme(axis.text.x = element_blank(), 
-        axis.title.x = element_blank(), 
-        legend.position = "none")
-dol_freq2 <- dol_freq + theme(legend.position = "top", legend.justification = "left")
-
-#dur
-dol_rest_hline_d = mean(dol_rest$mean_breath_dur, na.rm = TRUE)
-dol_rest_sd_d = sd(dol_rest$mean_breath_dur, na.rm = TRUE)
-
-dol_dur <- dat_freq_rec %>% filter(sp == "Dolphin" & 
-                                     elapsed_time < 10) %>%
-  ggplot(aes(x = elapsed_time, y = mean_breath_dur, color = Trial))+ 
-  geom_rect(aes(xmin = -Inf, xmax = Inf, ymin = dol_rest_hline_d - dol_rest_sd_d, ymax = dol_rest_hline_d + dol_rest_sd_d), fill = "grey90", color = "grey90") +
-  geom_hline(yintercept = dol_rest_hline_d, color = "grey60", linetype = "dashed", size = 1) +
-  geom_point(alpha = 0.2, size = 1.5)+
-  geom_smooth(se = FALSE, linewidth = 2)+
-  #facet_wrap(~Trial_Type, ncol = 4)+
-  #xlim(1, 11)+
-  ylim(0,4)+
-  xlab("Surface recovery time (min)")+
-  ylab("Breath duration (s)")+
-  ms_theme()+
-  scale_color_manual(values = col_pal[2:5])+
   theme(axis.text.x = element_blank(), 
         axis.title.x = element_blank(), 
         legend.position = "none")
 
 #ibi
-dol_rest_hline_i = mean(dol_rest$mean_ibi, na.rm = TRUE)
-dol_rest_sd_i = sd(dol_rest$mean_ibi, na.rm = TRUE)
+#predict
+bel_ibi_grid <- expand_grid(elapsed_time = seq(0, 10, length.out = 1e3),
+                            Trial = unique(vent_dl$Trial)) %>%
+  mutate(mean_ibi = predict(vent_ibi_dl, newdata = .)) %>% 
+  group_by(elapsed_time) %>% 
+  summarize(mean_ibi = mean(mean_ibi),
+            .groups = "drop")
 
-dol_ibi <- dat_freq_rec %>% filter(sp == "Dolphin" & 
-                                     elapsed_time < 10) %>%
+#plot
+bel_ibi <- vent_dl %>% filter(sp == "Beluga" & 
+                                elapsed_time < 10) %>%
   ggplot(aes(x = elapsed_time, y = mean_ibi, color = Trial))+ 
-  geom_rect(aes(xmin = -Inf, xmax = Inf, ymin = dol_rest_hline_i - dol_rest_sd_i, ymax = dol_rest_hline_i + dol_rest_sd_i), fill = "grey90", color = "grey90") +
-  geom_hline(yintercept = dol_rest_hline_i, color = "grey60", linetype = "dashed", size = 1) +
-  geom_point(alpha = 0.2, size = 1.5)+
-  geom_smooth(se = FALSE, linewidth = 2)+
-  #facet_wrap(~Trial_Type, ncol = 4)+
-  #xlim(1, 11)+
-  ylim(0,100)+
+  annotate("rect",
+           xmin = -Inf, 
+           xmax = Inf, 
+           ymin = bel_rest_hline_i - bel_rest_sd_i, 
+           ymax = bel_rest_hline_i + bel_rest_sd_i, 
+           fill = "grey90", 
+           color = NA, 
+           alpha = 0.8) +
+  geom_hline(yintercept = bel_rest_hline_i, color = "grey60", linetype = "dashed", size = 1) +
+  geom_point(alpha = 0.5, size = 1.5) + 
+  geom_line(data = bel_ibi_grid,
+            color = "black",
+            linewidth = 1.5) +
   xlab("Surface recovery time (min)")+
-  ylab("Inter-breath Interval (s)")+
+  scale_y_continuous("Inter-breath Interval (s)", 
+                     limits = c(0, 100),
+                     sec.axis = sec_axis(\(x) 60 / x,
+                                         expression("Breath Frequency (min"^-1 * ")"),
+                                         breaks = 60 / c(100, 75, 50, 25))) +
+  ms_theme()+
+  scale_color_manual(values = c(col_pal[3], col_pal[5]))+
+  theme(legend.position = "none", 
+        panel.grid.major = element_line(color = "grey70"),
+        axis.title.y.right = element_text(size = 16, face = "bold", color = "black"), 
+        axis.text.y.right = element_text(size = 14, color = "black"))
+
+bel_vent_plots <- bel_dur/bel_ibi
+
+#dur
+#predict
+dol_dur_grid <- expand_grid(elapsed_time = seq(0, 10, length.out = 1e3),
+                            Trial = unique(vent_tt$Trial)) %>%
+  mutate(mean_dur = predict(vent_dur_tt, newdata = .)) %>% 
+  group_by(elapsed_time) %>% 
+  summarize(mean_breath_dur = mean(mean_dur),
+            .groups = "drop")
+
+#plot
+dol_dur <- dat_freq_rec %>% filter(sp == "Dolphin" & 
+                                     elapsed_time < 10) %>%
+  ggplot(aes(x = elapsed_time, y = mean_breath_dur, color = Trial))+ 
+  annotate("rect",
+           xmin = -Inf, 
+           xmax = Inf, 
+           ymin = dol_rest_hline_d - dol_rest_sd_d, 
+           ymax = dol_rest_hline_d + dol_rest_sd_d, 
+           fill = "grey90", 
+           color = NA, 
+           alpha = 0.8) +
+  geom_hline(yintercept = dol_rest_hline_d, color = "grey60", linetype = "dashed", size = 1) +
+  geom_point(alpha = 0.5,size = 1.5)+ 
+  geom_line(data = dol_dur_grid,
+            linewidth = 1.5, 
+            color = "black") +
+  ylim(0,4)+
+  xlab("Surface recovery time (min)")+
+  ylab("Breath duration (s)")+
+  labs(title = "Dolphin")+
   ms_theme()+
   scale_color_manual(values = col_pal[2:5])+
-  theme(legend.position = "none")
+  theme(axis.text.x = element_blank(), 
+        axis.title.x = element_blank(), 
+        legend.position = "none")
+dol_dur2 <- dol_dur + theme(legend.position = "top", legend.justification = "left")
 
-#combine
-bel_vent_plots <- bel_freq/bel_dur/bel_ibi
-dol_vent_plots <- dol_freq/dol_dur/dol_ibi
 
-all_vent_plot <- ggarrange(bel_vent_plots, dol_vent_plots, ncol = 2, common.legend = TRUE, legend.grob = get_legend(dol_freq2))
+#ibi
+#predict
+dol_ibi_grid <- expand_grid(elapsed_time = seq(0, 10, length.out = 1e3),
+                            Trial = unique(vent_tt$Trial)) %>%
+  mutate(mean_ibi = predict(vent_ibi_tt, newdata = .),
+         is_SAB = Trial == "SAB") %>% 
+  group_by(is_SAB, elapsed_time) %>% 
+  summarize(mean_ibi = mean(mean_ibi),
+            .groups = "drop")
+
+#plot
+dol_ibi <- dat_freq_rec %>% filter(sp == "Dolphin" &
+                                     elapsed_time < 10) %>%
+  ggplot(aes(x = elapsed_time, y = mean_ibi, color = Trial)) + 
+  annotate("rect",
+           xmin = -Inf, 
+           xmax = Inf, 
+           ymin = dol_rest_hline_i - dol_rest_sd_i, 
+           ymax = dol_rest_hline_i + dol_rest_sd_i, 
+           fill = "grey90", 
+           color = NA, 
+           alpha = 0.8) +
+  geom_hline(yintercept = dol_rest_hline_i, color = "grey60", linetype = "dashed", size = 1) +
+  geom_point(alpha = 0.5, size = 1.5)+ 
+  geom_line(aes(color = is_SAB), 
+            dol_ibi_grid,
+            linewidth = 1.5) +
+  xlab("Surface recovery time (min)")+
+  scale_y_continuous("Inter-breath Interval (s)", 
+                     limits = c(0, 100),
+                     sec.axis = sec_axis(\(x) 60 / x,
+                                         expression("Breath Frequency (min"^-1 * ")"),
+                                         breaks = 60 / c(100, 75, 50, 25))) +
+  ms_theme()+
+  scale_color_manual(values = c(col_pal[2:5], "black", "#3B5159")) + #black = averaged trials, blue = SAB
+  theme(legend.position = "none", 
+        panel.grid.major = element_line(color = "grey70"), 
+        axis.title.y.right = element_text(size = 16, face = "bold", color = "black"), 
+        axis.text.y.right = element_text(size = 14, color = "black"))
+
+dol_vent_plots <- dol_dur/dol_ibi
+
+#all
+all_vent_plot <- ggarrange(bel_vent_plots, dol_vent_plots, ncol = 2, common.legend = TRUE, legend.grob = get_legend(dol_dur2))
 all_vent_plot
 
 ## Vasculature figure (Nazario et al., 2025 Figure 5) ####
